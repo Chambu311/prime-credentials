@@ -1,40 +1,29 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url)
+  const code = searchParams.get('code')
+  // if "next" is in param, use it as the redirect URL
+  const next = searchParams.get('next') ?? '/'
 
   if (code) {
     const supabase = await createClient()
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) {
+      const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
+      const isLocalEnv = process.env.VERCEL_ENV === 'development'
+      if (isLocalEnv) {
+        // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
+        return NextResponse.redirect(`${origin}${next}`)
+      } else if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${next}`)
+      } else {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
+    }
   }
-  
-  // Get the host from various possible sources
-  const forwardedHost = request.headers.get('x-forwarded-host')
-  const host = request.headers.get('host')
-  
-  // Determine the protocol (http vs https)
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-  
-  // Build the redirect URL using the most reliable source
-  let redirectUrl
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    // Use the environment variable if available (most reliable)
-    redirectUrl = process.env.NEXT_PUBLIC_SITE_URL
-  } else if (forwardedHost) {
-    // Use the forwarded host if available (for apps behind proxies)
-    redirectUrl = `${protocol}://${forwardedHost}`
-  } else if (host) {
-    // Fallback to the host header
-    redirectUrl = `${protocol}://${host}`
-  } else {
-    // Last resort fallback
-    redirectUrl = requestUrl.origin
-  }
-  
-  // Log the redirect URL for debugging (remove in production)
-  console.log('Redirecting to:', redirectUrl)
-  
-  return NextResponse.redirect(redirectUrl)
+
+  // return the user to an error page with instructions
+  return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }

@@ -1,55 +1,19 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function LoginDialog(props: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
-  const [siteUrl, setSiteUrl] = useState("");
-
-  // Get the site URL on component mount
-  useEffect(() => {
-    // Function to get the correct site URL
-    const getSiteUrl = () => {
-      // First priority: environment variable
-      if (process.env.NEXT_PUBLIC_SITE_URL) {
-        return process.env.NEXT_PUBLIC_SITE_URL;
-      }
-      
-      // Second priority: window location
-      if (typeof window !== 'undefined') {
-        const protocol = window.location.protocol;
-        const host = window.location.host;
-        return `${protocol}//${host}`;
-      }
-      
-      // Fallback
-      return '';
-    };
-    
-    setSiteUrl(getSiteUrl());
-  }, []);
 
   async function signInWithGitHub() {
     setLoading(true);
     try {
       const supabase = createClient();
-      
-      // Make sure we have a site URL
-      if (!siteUrl) {
-        console.error("Site URL is not available");
-        setLoading(false);
-        return;
-      }
-      
-      // Log the redirect URL for debugging (remove in production)
-      const redirectUrl = `${siteUrl}/api/auth/callback`;
-      console.log("Redirecting to:", redirectUrl);
-      
       await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
-          redirectTo: redirectUrl,
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`,
         }
       });
     } catch (error) {
@@ -76,7 +40,7 @@ export default function LoginDialog(props: { onClose: () => void }) {
         <div className="mt-8">
           <button
             onClick={signInWithGitHub}
-            disabled={loading || !siteUrl}
+            disabled={loading}
             className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg 
