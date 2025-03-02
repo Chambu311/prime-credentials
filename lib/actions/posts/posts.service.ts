@@ -42,7 +42,7 @@ export class PostsService {
 
   async getPosts() {
     const posts: PublicPost[] = [];
-    const { data, error } = await this.supabase.from("post").select("*");
+    const { data, error } = await this.supabase.from("post").select("*").order("created_at", { ascending: false });
     if (error) {
       throw new Error(error.message);
     }

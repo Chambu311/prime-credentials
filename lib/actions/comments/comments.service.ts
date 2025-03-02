@@ -27,7 +27,8 @@ export class CommentsService {
     const { data, error } = await this.supabase
       .from("comment")
       .select("*")
-      .eq("post_id", postId);
+      .eq("post_id", postId)
+      .order("created_at", { ascending: false });
     if (error) {
       throw new Error(error.message);
     }

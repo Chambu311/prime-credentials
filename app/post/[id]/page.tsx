@@ -20,7 +20,7 @@ import LoadingSpinner from "@/app/components/loader";
             We couldn&apos;t load this post. Please try again later.
           </p>
           <Link
-            href="/feed"
+            href="/"
             className="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -40,7 +40,7 @@ import LoadingSpinner from "@/app/components/loader";
             The post you&apos;re looking for doesn&apos;t exist or has been removed.
           </p>
           <Link
-            href="/feed"
+            href="/"
             className="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -63,7 +63,7 @@ import LoadingSpinner from "@/app/components/loader";
       {/* Back button */}
       <div className="mb-6">
         <Link
-          href="/feed"
+          href="/"
           className="inline-flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
