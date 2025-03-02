@@ -10,10 +10,16 @@ export default function LoginDialog(props: { onClose: () => void }) {
     setLoading(true);
     try {
       const supabase = createClient();
+      
+      // Determine the correct redirect URL based on environment
+      const baseUrl = process.env.NODE_ENV === 'production'
+        ? process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+        : window.location.origin;
+      
       await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`,
+          redirectTo: `${baseUrl}/api/auth/callback`,
         }
       });
     } catch (error) {
