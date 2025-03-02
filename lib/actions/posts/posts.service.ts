@@ -1,17 +1,20 @@
 import { PublicPost, PublicPostWithComments } from "@/lib/types";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { ImagesService } from "../images.service";
 
 export class PostsService {
   private supabase: SupabaseClient;
+  private imageService: ImagesService;
   constructor(supabase: SupabaseClient) {
     this.supabase = supabase;
+    this.imageService = new ImagesService(supabase);
   }
 
   async createPost(comment: string, image: File | null) {
     const {
       data: { user },
     } = await this.supabase.auth.getUser();
-    const imagePath = image ? await this.uploadImageToBucket(image) : null;
+    const imagePath = image ? await this.imageService.uploadImageToBucket(image) : null;
     const { data, error: postError } = await this.supabase.from("post").insert({
       content: comment,
       user_id: user?.id,
@@ -36,8 +39,14 @@ export class PostsService {
     if (error) {
       throw new Error(error.message);
     }
-    const imageUrl = await this.getPostImageSignedUrl(data.image);
-    return { ...data, image: imageUrl, };
+    const imageUrl = await this.imageService.getPostImageSignedUrl(data.image);
+      for (const comment of data.comment) {
+        if (comment.image) {
+          const commentImageUrl = await this.imageService.getPostImageSignedUrl(comment.image);
+          comment.image = commentImageUrl;
+        }
+      }
+    return { ...data, image: imageUrl, comment: data.comment };
   }
 
   async getPosts() {
@@ -47,25 +56,9 @@ export class PostsService {
       throw new Error(error.message);
     }
     for (const post of data) {
-      const imageUrl = await this.getPostImageSignedUrl(post.image);
+      const imageUrl = await this.imageService.getPostImageSignedUrl(post.image);
       posts.push({ ...post, image: imageUrl });
     }
     return posts;
-  }
-
-  async uploadImageToBucket(image: File) {
-    const { data, error } = await this.supabase.storage.from("prime-images").upload(`${Date.now()}-${image.name}`, image);
-    if (error) {
-      throw new Error(error.message);
-    }
-    return data.path;
-  }
-
-  private async getPostImageSignedUrl(imageName: string) {
-    const { data, error } = await this.supabase.storage.from("prime-images").createSignedUrl(imageName, 600);
-    if (error) {
-      throw new Error(error.message);
-    }
-    return data.signedUrl;
   }
 }

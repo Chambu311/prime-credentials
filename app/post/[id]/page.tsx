@@ -117,7 +117,7 @@ import LoadingSpinner from "@/app/components/loader";
 
 
           {/* Comments section */}
-          <div className="bg-gray-50 dark:bg-gray-900 px-6 py-5 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-6 bg-gray-50 dark:bg-gray-900 px-6 py-5 border-t border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Comments</h3>
             {/* Comment input */}
             {user ? (
@@ -130,7 +130,7 @@ import LoadingSpinner from "@/app/components/loader";
 
             {/* Comments list */}
             {post.comment && post.comment.length > 0 ? (
-              <div className="space-y-4 mb-6">
+              <div className="space-y-4 mt-6">
                 {post.comment.map((comment: PublicComment) => {
                   const commentAvatarInitial = comment.user_email ? comment.user_email.charAt(0).toUpperCase() : "U";
                   // Format comment timestamp
@@ -148,6 +148,19 @@ import LoadingSpinner from "@/app/components/loader";
                             <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap break-words">
                               {comment.content}
                             </p>
+                            
+                            {/* Comment image if available */}
+                            {comment.image && (
+                              <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                                <div className="relative h-40 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                                  <img
+                                    src={comment.image}
+                                    alt="Comment attachment"
+                                    className="max-h-40 max-w-full object-contain"
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -156,7 +169,7 @@ import LoadingSpinner from "@/app/components/loader";
                 })}
               </div>
             ) : (
-              <div className="text-center py-6 mb-6">
+              <div className="text-center py-6 mt-4">
                 <p className="text-gray-500 dark:text-gray-400">No comments yet. Be the first to share your thoughts!</p>
               </div>
             )}

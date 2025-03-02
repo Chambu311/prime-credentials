@@ -1,75 +1,38 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Image, X } from "lucide-react";
 import { useUser } from "@/lib/contexts";
 import { useRouter } from "next/navigation";
 import { createPost } from "@/lib/actions/posts/posts.controller";
-const MAX_FILE_SIZE = 500 * 1024;
+import { useImageUploader } from "@/lib/hooks";
 
 export default function AddPost() {
     const [content, setContent] = useState("");
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const { user } = useUser();
     const router = useRouter();
-    
-    // Maximum file size: 700 KB
-    
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        
-        // Check file size
-        if (file.size > MAX_FILE_SIZE) {
-            alert("Image size exceeds 500 KB. Please select a smaller image.");
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
-            return;
-        }
-        
-        setImageFile(file);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            setImagePreview(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const handleRemoveImage = () => {
-        setImageFile(null);
-        setImagePreview(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
-    };
+    const { image, imagePreview, fileInputRef, handleFileChange, handleRemoveImage } = useImageUploader();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
         if (!user) {
             // If user is not logged in, show login dialog
             const loginDialog = document.getElementById("login-dialog") as HTMLDialogElement;
             if (loginDialog) loginDialog.showModal();
             return;
         }
-
-        if (!content.trim() && !imageFile) {
+        if (!content.trim() && !image) {
             alert("Please enter a message or select an image");
             return;
         }
         
-
         setIsSubmitting(true);
-
         try {
             const formData = new FormData();
             formData.append("content", content);
-            if (imageFile) {
-                formData.append("image", imageFile);
+            if (image) {
+                formData.append("image", image);
             }
             
             const result = await createPost(formData);
@@ -79,11 +42,7 @@ export default function AddPost() {
                 return;
             }
             setContent("");
-            setImageFile(null);
-            setImagePreview(null);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
+            handleRemoveImage();
             router.refresh();
         } catch (error) {
             console.error("Error posting:", error);
@@ -159,7 +118,7 @@ export default function AddPost() {
                             </div>
                             <button
                                 type="submit"
-                                disabled={(!content.trim() && !imageFile) || !user || isSubmitting}
+                                disabled={(!content.trim() && !image) || !user || isSubmitting}
                                 className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                             >
                                 {isSubmitting ? "Posting..." : "Post"}

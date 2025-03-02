@@ -1,35 +1,28 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { ImagesService } from "../images.service";
 
 export class CommentsService {
-  constructor(private supabase: SupabaseClient) {
+  private supabase: SupabaseClient;
+  private imageService: ImagesService;
+  constructor(supabase: SupabaseClient) {
     this.supabase = supabase;
+    this.imageService = new ImagesService(supabase);
   }
 
-  async createComment(content: string, postId: string) {
-    console.log(content, postId);
+  async createComment(content: string, postId: string, image: File | null) {
     const {
       data: { user },
     } = await this.supabase.auth.getUser();
+    const imagePath = image ? await this.imageService.uploadImageToBucket(image) : null;
     const { data, error } = await this.supabase.from("comment").insert({
       content: content,
       post_id: postId,
       user_id: user?.id,
       user_email: user?.email,
+      image: imagePath,
     });
     if (error) {
       console.error(error.message);
-      throw new Error(error.message);
-    }
-    return data;
-  }
-
-  async getCommentsByPostId(postId: string) {
-    const { data, error } = await this.supabase
-      .from("comment")
-      .select("*")
-      .eq("post_id", postId)
-      .order("created_at", { ascending: false });
-    if (error) {
       throw new Error(error.message);
     }
     return data;
