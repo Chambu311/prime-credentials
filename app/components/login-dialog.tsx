@@ -11,10 +11,16 @@ export default function LoginDialog(props: { onClose: () => void }) {
     try {
       const supabase = createClient();
       const currentUrl = window.location.href;
+      
+      // Get the current domain (works in both development and production)
+      const baseUrl = typeof window !== 'undefined' ? 
+        `${window.location.protocol}//${window.location.host}` : 
+        process.env.NEXT_PUBLIC_SITE_URL || 'https://your-production-domain.com';
+      
       await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
-          redirectTo: `${window.location.origin}/api/auth/callback?redirectUrl=${encodeURIComponent(currentUrl)}`,
+          redirectTo: `${baseUrl}/api/auth/callback?redirectUrl=${encodeURIComponent(currentUrl)}`,
         }
       });
     } catch (error) {
