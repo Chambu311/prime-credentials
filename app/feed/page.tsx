@@ -3,8 +3,9 @@ import AddPost from "../components/add-post";
 import { getPosts } from "@/lib/actions/posts/posts.controller";
 import { PublicPost } from "@/lib/types";
 import Link from "next/link";
-
-export default async function FeedPage() {
+import LoadingSpinner from "../components/loader";
+import { Suspense } from "react";
+ async function FeedPage() {
     const { data, error } = await getPosts();
     if (error) {
         console.error(error);
@@ -26,14 +27,14 @@ export default async function FeedPage() {
                         <p className="text-gray-500 dark:text-gray-400">No posts yet. Be the first to share something!</p>
                     </div>
                 )}
-                
+
                 {data?.map((post: PublicPost) => {
                     // Format the timestamp
                     const formattedDate = new Date(post.created_at).toLocaleString();
-                    
+
                     // Get first letter of email for avatar
                     const avatarInitial = post.user_email ? post.user_email.charAt(0).toUpperCase() : "U";
-                    
+
                     return (
                         <div key={post.id} className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                             <div className="px-6 py-5">
@@ -50,27 +51,27 @@ export default async function FeedPage() {
                                                 </h3>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">{formattedDate}</p>
                                             </div>
-                                            <Link 
-                                                href={`/feed/post/${post.id}`} 
+                                            <Link
+                                                href={`/feed/post/${post.id}`}
                                                 className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
                                             >
                                                 <MoreHorizontal className="h-5 w-5" />
                                             </Link>
                                         </div>
-                                        
+
                                         {/* Post content */}
                                         <div className="mt-3">
                                             <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap break-words">
                                                 {post.content}
                                             </p>
-                                            
+
                                             {/* Post image if available */}
                                             {post.image && (
                                                 <div className="mt-3 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                                                     <div className="relative h-64 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                                                        <img 
-                                                            src={post.image} 
-                                                            alt="Post attachment" 
+                                                        <img
+                                                            src={post.image}
+                                                            alt="Post attachment"
                                                             className="max-h-64 max-w-full object-contain"
                                                         />
                                                     </div>
@@ -85,5 +86,13 @@ export default async function FeedPage() {
                 })}
             </div>
         </div>
+    );
+}
+
+export default function FeedPageWrapper() {
+    return (
+        <Suspense fallback={<LoadingSpinner />}>
+            <FeedPage />
+        </Suspense>
     );
 }

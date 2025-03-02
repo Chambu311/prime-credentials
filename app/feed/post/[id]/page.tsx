@@ -4,7 +4,9 @@ import Link from "next/link";
 import { getUser } from "@/lib/supabase/server";
 import AddComment from "@/app/components/add-comment";
 import { PublicComment } from "@/lib/types";
-export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
+import { Suspense } from "react";
+import LoadingSpinner from "@/app/components/loader";
+ async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { data: post, error } = await getPostById(id);
   const user = await getUser();
@@ -163,5 +165,14 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default async function PostDetailPageWrapper({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <PostDetailPage params={params} />
+    </Suspense>
   );
 }
