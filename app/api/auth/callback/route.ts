@@ -10,10 +10,31 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code)
   }
   
-  // Use NEXT_PUBLIC_SITE_URL in production, or fallback to request headers
-  const redirectUrl = process.env.NODE_ENV === 'production' 
-    ? (process.env.NEXT_PUBLIC_SITE_URL || `https://${request.headers.get('host')}`)
-    : requestUrl.origin;
-    
+  // Get the host from various possible sources
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const host = request.headers.get('host')
+  
+  // Determine the protocol (http vs https)
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
+  
+  // Build the redirect URL using the most reliable source
+  let redirectUrl
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    // Use the environment variable if available (most reliable)
+    redirectUrl = process.env.NEXT_PUBLIC_SITE_URL
+  } else if (forwardedHost) {
+    // Use the forwarded host if available (for apps behind proxies)
+    redirectUrl = `${protocol}://${forwardedHost}`
+  } else if (host) {
+    // Fallback to the host header
+    redirectUrl = `${protocol}://${host}`
+  } else {
+    // Last resort fallback
+    redirectUrl = requestUrl.origin
+  }
+  
+  // Log the redirect URL for debugging (remove in production)
+  console.log('Redirecting to:', redirectUrl)
+  
   return NextResponse.redirect(redirectUrl)
 }
