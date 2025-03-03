@@ -15,12 +15,14 @@ export class ImagesService {
     return data.path;
   }
 
-  public async getPostImageSignedUrl(imageName: string) {
+  async getPostImageSignedUrl(imageName: string | null) {
+    if (!imageName) return null;
     const { data, error } = await this.supabase.storage
       .from("prime-images")
       .createSignedUrl(imageName, 600);
     if (error) {
-      throw new Error(error.message);
+      console.error("Error getting signed URL:", error.message);
+      return null;
     }
     return data.signedUrl;
   }

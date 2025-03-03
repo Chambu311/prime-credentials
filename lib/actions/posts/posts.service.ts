@@ -56,8 +56,12 @@ export class PostsService {
       throw new Error(error.message);
     }
     for (const post of data) {
-      const imageUrl = await this.imageService.getPostImageSignedUrl(post.image);
-      posts.push({ ...post, image: imageUrl });
+      if (post.image) {
+        const imageUrl = await this.imageService.getPostImageSignedUrl(post.image);
+        posts.push({ ...post, image: imageUrl });
+      } else {
+        posts.push(post);
+      }
     }
     return posts;
   }
